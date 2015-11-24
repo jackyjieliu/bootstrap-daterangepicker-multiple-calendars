@@ -34,6 +34,58 @@
 
 }(this || {}, function(root, daterangepicker, moment, $) { // 'this' doesn't exist on a server
 
+    function generateTemplate(calendarCount) {
+        var template;
+        var i = 0;
+
+        for(i = 0; i < calendarCount; i++) {
+            if (i === 0) {
+                template = '<div class="calendar left calendar_0">' +
+                    '<div class="daterangepicker_input">' +
+                      '<input class="input-mini" type="text" name="daterangepicker_start" value="" />' +
+                      '<i class="fa fa-calendar glyphicon glyphicon-calendar"></i>' +
+                      '<div class="calendar-time">' +
+                        '<div></div>' +
+                        '<i class="fa fa-clock-o glyphicon glyphicon-time"></i>' +
+                      '</div>' +
+                    '</div>' +
+                    '<div class="calendar-table"></div>' +
+                '</div>';
+
+            } else if (i === calendarCount - 1) {
+                template += '<div class="calendar right calendar_' + i + '">' +
+                    '<div class="daterangepicker_input">' +
+                      '<input class="input-mini" type="text" name="daterangepicker_end" value="" />' +
+                      '<i class="fa fa-calendar glyphicon glyphicon-calendar"></i>' +
+                      '<div class="calendar-time">' +
+                        '<div></div>' +
+                        '<i class="fa fa-clock-o glyphicon glyphicon-time"></i>' +
+                      '</div>' +
+                    '</div>' +
+                    '<div class="calendar-table"></div>' +
+                '</div>';
+            } else {
+                template += '<div class="calendar middle calendar_' + i + '">' +
+                    '<div class="daterangepicker_input">' +
+                      '<div class="input-mini_placeholder" type="text"></div>' +
+                    '</div>' +
+                    '<div class="calendar-table"></div>' +
+                '</div>';
+            }
+        }
+
+        return '<div class="daterangepicker dropdown-menu">' +
+            template +
+            '<div class="ranges">' +
+                '<div class="range_inputs">' +
+                    '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
+                    '<button class="cancelBtn" type="button"></button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    }
+
+
     var DateRangePicker = function(element, options, cb) {
 
         //default settings for options
@@ -86,6 +138,7 @@
         this.isShowing = false;
         this.leftCalendar = {};
         this.rightCalendar = {};
+        this.calendarsObj = [];
 
         //custom options from user
         if (typeof options !== 'object' || options === null)
@@ -95,41 +148,22 @@
         //data-api options will be overwritten with custom javascript options
         options = $.extend(this.element.data(), options);
 
+
+        if (typeof options.calendarCount === 'number') {
+            this.calendarCount = options.calendarCount;
+        } else {
+            this.calendarCount = 2;
+        }
+
+
         //html template for the picker UI
-        if (typeof options.template !== 'string')
-            options.template = '<div class="daterangepicker dropdown-menu">' +
-                '<div class="calendar left">' +
-                    '<div class="daterangepicker_input">' +
-                      '<input class="input-mini" type="text" name="daterangepicker_start" value="" />' +
-                      '<i class="fa fa-calendar glyphicon glyphicon-calendar"></i>' +
-                      '<div class="calendar-time">' +
-                        '<div></div>' +
-                        '<i class="fa fa-clock-o glyphicon glyphicon-time"></i>' +
-                      '</div>' +
-                    '</div>' +
-                    '<div class="calendar-table"></div>' +
-                '</div>' +
-                '<div class="calendar right">' +
-                    '<div class="daterangepicker_input">' +
-                      '<input class="input-mini" type="text" name="daterangepicker_end" value="" />' +
-                      '<i class="fa fa-calendar glyphicon glyphicon-calendar"></i>' +
-                      '<div class="calendar-time">' +
-                        '<div></div>' +
-                        '<i class="fa fa-clock-o glyphicon glyphicon-time"></i>' +
-                      '</div>' +
-                    '</div>' +
-                    '<div class="calendar-table"></div>' +
-                '</div>' +
-                '<div class="ranges">' +
-                    '<div class="range_inputs">' +
-                        '<button class="applyBtn" disabled="disabled" type="button"></button> ' +
-                        '<button class="cancelBtn" type="button"></button>' +
-                    '</div>' +
-                '</div>' +
-            '</div>';
+        if (typeof options.template !== 'string') {
+            options.template = generateTemplate(this.calendarCount);
+        }
 
         this.parentEl = (options.parentEl && $(options.parentEl).length) ? $(options.parentEl) : $(this.parentEl);
         this.container = $(options.template).appendTo(this.parentEl);
+        this.initializeCalandarObjects();
 
         //
         // handle all the possible options overriding defaults
@@ -362,6 +396,7 @@
             this.container.addClass('single');
             this.container.find('.calendar.left').addClass('single');
             this.container.find('.calendar.left').show();
+            this.container.find('.calendar.middle').hide();
             this.container.find('.calendar.right').hide();
             this.container.find('.daterangepicker_input input, .daterangepicker_input i').hide();
             if (!this.timePicker) {
@@ -445,6 +480,47 @@
 
         constructor: DateRangePicker,
 
+        initializeCalandarObjects: function() {
+            var i = 0;
+            for(i = 0; i < this.calendarCount; i++) {
+                this.calendarsObj.push({});
+            }
+        },
+
+        getCalendarIndexFromClasses: function(classes) {
+
+            var classArr = classes.split(" ");
+            var length = classArr.length;
+            var calendarIndex;
+            var classPrefix = 'calendar_';
+            for (var i = 0; i < length; i++) {
+                var intIndex = classArr[i].indexOf(classPrefix);
+                if (intIndex !== -1) {
+                    calendarIndex = parseInt(classArr[i].slice(classPrefix.length), 10);
+                }
+            }
+            return calendarIndex;
+        },
+
+        getCalendarObjectFromClasses: function(classes) {
+
+            var calendarIndex = this.getCalendarIndexFromClasses(classes)
+            return this.getCalendarObject(calendarIndex);
+        },
+
+        getCalendarObject: function(calendar) {
+            var calendarIndex;
+            if (calendar === 'left') {
+                calendarIndex = 0;
+            } else if (calendar === 'right') {
+                calendarIndex = this.calendarCount - 1;
+            } else {
+                calendarIndex = calendar;
+            }
+
+            return this.calendarsObj[calendarIndex];
+        },
+
         setStartDate: function(startDate) {
             if (typeof startDate === 'string')
                 this.startDate = moment(startDate, this.locale.format);
@@ -525,28 +601,50 @@
         },
 
         updateMonthsInView: function() {
+            var leftCalendar = this.calendarsObj[0];
             if (this.endDate) {
+                var startDateInView = false;
+                var endDateInView = false;
+
+                for (var i = 0; i < this.calendarCount; i++) {
+                    var month = this.calendarsObj[i].month;
+                    if (month) {
+                        startDateInView = startDateInView || month.format('YYYY-MM') == this.startDate.format('YYYY-MM');
+                        endDateInView = endDateInView || month.format('YYYY-MM') == this.endDate.format('YYYY-MM');
+                    }
+                }
 
                 //if both dates are visible already, do nothing
-                if (!this.singleDatePicker && this.leftCalendar.month && this.rightCalendar.month &&
-                    (this.startDate.format('YYYY-MM') == this.leftCalendar.month.format('YYYY-MM') || this.startDate.format('YYYY-MM') == this.rightCalendar.month.format('YYYY-MM'))
-                    &&
-                    (this.endDate.format('YYYY-MM') == this.leftCalendar.month.format('YYYY-MM') || this.endDate.format('YYYY-MM') == this.rightCalendar.month.format('YYYY-MM'))
-                    ) {
+                if (!this.singleDatePicker && startDateInView && endDateInView) {
                     return;
                 }
 
-                this.leftCalendar.month = this.startDate.clone().date(2);
+                leftCalendar.month = this.startDate.clone().date(2);
+
                 if (!this.linkedCalendars && (this.endDate.month() != this.startDate.month() || this.endDate.year() != this.startDate.year())) {
-                    this.rightCalendar.month = this.endDate.clone().date(2);
+                    var rightCalendar = this.calendarsObj[this.calendarCount -1];
+                    rightCalendar.month = this.endDate.clone().date(2);
                 } else {
-                    this.rightCalendar.month = this.startDate.clone().date(2).add(1, 'month');
+                    for(var j = 1; j < this.calendarCount; j++) {
+                        this.calendarsObj[j].month = this.startDate.clone().date(2).add(j, 'month');
+                    }
                 }
                 
             } else {
-                if (this.leftCalendar.month.format('YYYY-MM') != this.startDate.format('YYYY-MM') && this.rightCalendar.month.format('YYYY-MM') != this.startDate.format('YYYY-MM')) {
-                    this.leftCalendar.month = this.startDate.clone().date(2);
-                    this.rightCalendar.month = this.startDate.clone().date(2).add(1, 'month');
+
+                var startDateInView = false;
+                for (var i = 0; i < this.calendarCount; i++) {
+                    var month = this.calendarsObj[i].month;
+                    if (month) {
+                        startDateInView = startDateInView || month.format('YYYY-MM') == this.startDate.format('YYYY-MM');
+                    }
+                }
+
+                if (!startDateInView) {
+                    leftCalendar.month = this.startDate.clone().date(2);
+                    for(var j = 1; j < this.calendarCount; j++) {
+                        this.calendarsObj[j].month = this.startDate.clone().date(2).add(j, 'month');
+                    }
                 }
             }
         },
@@ -582,8 +680,9 @@
                 this.rightCalendar.month.hour(hour).minute(minute).second(second);
             }
 
-            this.renderCalendar('left');
-            this.renderCalendar('right');
+            for(var i = 0; i < this.calendarCount; i++) {
+                this.renderCalendar(i);
+            }
 
             //highlight any predefined range matching the current start and end dates
             this.container.find('.ranges li').removeClass('active');
@@ -615,13 +714,13 @@
 
         },
 
-        renderCalendar: function(side) {
+        renderCalendar: function(calendarIndex) {
 
             //
             // Build the matrix of dates that will populate the calendar
             //
 
-            var calendar = side == 'left' ? this.leftCalendar : this.rightCalendar;
+            var calendar = this.getCalendarObject(calendarIndex);
             var month = calendar.month.month();
             var year = calendar.month.year();
             var hour = calendar.month.hour();
@@ -663,30 +762,26 @@
                 calendar[row][col] = curDate.clone().hour(hour).minute(minute).second(second);
                 curDate.hour(12);
 
-                if (this.minDate && calendar[row][col].format('YYYY-MM-DD') == this.minDate.format('YYYY-MM-DD') && calendar[row][col].isBefore(this.minDate) && side == 'left') {
+                if (this.minDate && calendar[row][col].format('YYYY-MM-DD') == this.minDate.format('YYYY-MM-DD') && calendar[row][col].isBefore(this.minDate) && calendarIndex === 0) {
                     calendar[row][col] = this.minDate.clone();
                 }
 
-                if (this.maxDate && calendar[row][col].format('YYYY-MM-DD') == this.maxDate.format('YYYY-MM-DD') && calendar[row][col].isAfter(this.maxDate) && side == 'right') {
+                if (this.maxDate && calendar[row][col].format('YYYY-MM-DD') == this.maxDate.format('YYYY-MM-DD') && calendar[row][col].isAfter(this.maxDate) && calendarIndex === this.calendarCount - 1) {
                     calendar[row][col] = this.maxDate.clone();
                 }
 
             }
 
             //make the calendar object available to hoverDate/clickDate
-            if (side == 'left') {
-                this.leftCalendar.calendar = calendar;
-            } else {
-                this.rightCalendar.calendar = calendar;
-            }
+            this.getCalendarObject(calendarIndex).calendar = calendar;
 
             //
             // Display the calendar
             //
 
-            var minDate = side == 'left' ? this.minDate : this.startDate;
+            var minDate = calendarIndex == 0 ? this.minDate : this.startDate;
             var maxDate = this.maxDate;
-            var selected = side == 'left' ? this.startDate : this.endDate;
+            var selected = calendarIndex == 0 ? this.startDate : this.endDate;
 
             var html = '<table class="table-condensed">';
             html += '<thead>';
@@ -696,7 +791,7 @@
             if (this.showWeekNumbers)
                 html += '<th></th>';
 
-            if ((!minDate || minDate.isBefore(calendar.firstDay)) && (!this.linkedCalendars || side == 'left')) {
+            if ((!minDate || minDate.isBefore(calendar.firstDay)) && (!this.linkedCalendars || calendarIndex == 0)) {
                 html += '<th class="prev available"><i class="fa fa-chevron-left glyphicon glyphicon-chevron-left"></i></th>';
             } else {
                 html += '<th></th>';
@@ -738,7 +833,7 @@
             }
 
             html += '<th colspan="5" class="month">' + dateHtml + '</th>';
-            if ((!maxDate || maxDate.isAfter(calendar.lastDay)) && (!this.linkedCalendars || side == 'right' || this.singleDatePicker)) {
+            if ((!maxDate || maxDate.isAfter(calendar.lastDay)) && (!this.linkedCalendars || calendarIndex == this.calendarCount - 1 || this.singleDatePicker)) {
                 html += '<th class="next available"><i class="fa fa-chevron-right glyphicon glyphicon-chevron-right"></i></th>';
             } else {
                 html += '<th></th>';
@@ -843,7 +938,7 @@
             html += '</tbody>';
             html += '</table>';
 
-            this.container.find('.calendar.' + side + ' .calendar-table').html(html);
+            this.container.find('.calendar.calendar_' + calendarIndex + ' .calendar-table').html(html);
 
         },
 
@@ -1179,25 +1274,35 @@
 
         clickPrev: function(e) {
             var cal = $(e.target).parents('.calendar');
-            if (cal.hasClass('left')) {
-                this.leftCalendar.month.subtract(1, 'month');
-                if (this.linkedCalendars)
-                    this.rightCalendar.month.subtract(1, 'month');
-            } else {
-                this.rightCalendar.month.subtract(1, 'month');
+            
+            var classes = cal.attr('class');
+            var calendar = this.getCalendarObjectFromClasses(classes);
+            var calendarIndex = this.getCalendarIndexFromClasses(classes);
+
+            calendar.month.subtract(1, 'month');
+            if (this.linkedCalendars && calendarIndex === 0) {
+                for (var j = 1; j < this.calendarCount; j++) {
+                    this.calendarsObj[j].month.subtract(1, 'month');
+                }
             }
+
             this.updateCalendars();
         },
 
         clickNext: function(e) {
             var cal = $(e.target).parents('.calendar');
-            if (cal.hasClass('left')) {
-                this.leftCalendar.month.add(1, 'month');
-            } else {
-                this.rightCalendar.month.add(1, 'month');
-                if (this.linkedCalendars)
-                    this.leftCalendar.month.add(1, 'month');
+
+            var classes = cal.attr('class');
+            var calendar = this.getCalendarObjectFromClasses(classes);
+            var calendarIndex = this.getCalendarIndexFromClasses(classes);
+
+            calendar.month.add(1, 'month');
+            if (this.linkedCalendars && calendarIndex === this.calendarCount - 1) {
+                for (var j = 0; j < this.calendarCount - 1; j++) {
+                    this.calendarsObj[j].month.add(1, 'month');
+                }
             }
+
             this.updateCalendars();
         },
 
@@ -1215,7 +1320,11 @@
             var row = title.substr(1, 1);
             var col = title.substr(3, 1);
             var cal = $(e.target).parents('.calendar');
-            var date = cal.hasClass('left') ? this.leftCalendar.calendar[row][col] : this.rightCalendar.calendar[row][col];
+
+            var classes = cal.attr('class');
+            var calendar = this.getCalendarObjectFromClasses(classes);
+
+            var date = calendar.calendar[row][col];
 
             if (this.endDate) {
                 this.container.find('input[name=daterangepicker_start]').val(date.format(this.locale.format));
@@ -1224,9 +1333,8 @@
             }
 
             //highlight the dates between the start date and the date being hovered as a potential end date
-            var leftCalendar = this.leftCalendar;
-            var rightCalendar = this.rightCalendar;
             var startDate = this.startDate;
+            var that = this;
             if (!this.endDate) {
                 this.container.find('.calendar td').each(function(index, el) {
 
@@ -1237,7 +1345,15 @@
                     var row = title.substr(1, 1);
                     var col = title.substr(3, 1);
                     var cal = $(el).parents('.calendar');
-                    var dt = cal.hasClass('left') ? leftCalendar.calendar[row][col] : rightCalendar.calendar[row][col];
+                    var classes = cal.attr('class');
+                    var calendar = that.getCalendarObjectFromClasses(classes);
+
+                    var dt
+                    try {
+                        dt = calendar.calendar[row][col];
+                    } catch (e) {
+                        console.log(row + " " + col);
+                    }
 
                     if (dt.isAfter(startDate) && dt.isBefore(date)) {
                         $(el).addClass('in-range');
@@ -1258,7 +1374,11 @@
             var row = title.substr(1, 1);
             var col = title.substr(3, 1);
             var cal = $(e.target).parents('.calendar');
-            var date = cal.hasClass('left') ? this.leftCalendar.calendar[row][col] : this.rightCalendar.calendar[row][col];
+
+            var classes = cal.attr('class');
+            var calendar = this.getCalendarObjectFromClasses(classes);
+
+            var date = calendar.calendar[row][col];
 
             //
             // this function needs to do a few things:
