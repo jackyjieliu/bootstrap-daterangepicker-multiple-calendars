@@ -1355,7 +1355,8 @@
                         console.log(row + " " + col);
                     }
 
-                    if (dt.isAfter(startDate) && dt.isBefore(date)) {
+                    if (dt.isAfter(startDate) && dt.isBefore(date) || 
+                        dt.isBefore(startDate) && dt.isAfter(date)) {
                         $(el).addClass('in-range');
                     } else {
                         $(el).removeClass('in-range');
@@ -1388,7 +1389,7 @@
             // * if single date picker mode, and time picker isn't enabled, apply the selection immediately
             //
 
-            if (this.endDate || date.isBefore(this.startDate)) {
+            if (this.endDate) {
                 if (this.timePicker) {
                     var hour = parseInt(this.container.find('.left .hourselect').val(), 10);
                     if (!this.timePicker24Hour) {
@@ -1418,7 +1419,14 @@
                     var second = this.timePickerSeconds ? parseInt(this.container.find('.right .secondselect').val(), 10) : 0;
                     date = date.clone().hour(hour).minute(minute).second(second);
                 }
-                this.setEndDate(date.clone());
+
+                if (this.startDate.isBefore(date)) {
+                    this.setEndDate(date.clone());
+                } else {
+                    this.setEndDate(this.startDate.clone());
+                    this.setStartDate(date.clone());
+                }
+
                 if (this.autoApply)
                     this.clickApply();
             }
