@@ -200,6 +200,14 @@
 
         }
 
+        if (typeof options.firstDay === 'number') {
+            if (options.firstDay === 7) {
+                this.locale.firstDay = 0;
+            } else {
+                this.locale.firstDay = options.firstDay;
+            }
+        }
+
         if (typeof options.startDate === 'string')
             this.startDate = moment(options.startDate, this.locale.format);
 
