@@ -1355,13 +1355,7 @@
                     var cal = $(el).parents('.calendar');
                     var classes = cal.attr('class');
                     var calendar = that.getCalendarObjectFromClasses(classes);
-
-                    var dt
-                    try {
-                        dt = calendar.calendar[row][col];
-                    } catch (e) {
-                        console.log(row + " " + col);
-                    }
+                    var dt = calendar.calendar[row][col];
 
                     if (dt.isAfter(startDate) && dt.isBefore(date) || 
                         dt.isBefore(startDate) && dt.isAfter(date)) {
@@ -1370,6 +1364,16 @@
                         $(el).removeClass('in-range');
                     }
 
+                    // Adjust the start date highlight icon
+                    if (that.startDate.format('YYYY-MM-DD') === dt.format('YYYY-MM-DD')) {
+                        if (that.startDate.isBefore(date)) {
+                            $(el).removeClass('end-date');
+                            $(el).addClass('start-date');
+                        } else {
+                            $(el).removeClass('start-date');
+                            $(el).addClass('end-date');
+                        }
+                    }
                 });
             }
 
