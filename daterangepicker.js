@@ -627,7 +627,21 @@
                     return;
                 }
 
-                leftCalendar.month = this.startDate.clone().date(2);
+
+                if (!this.linkedCalendars && (this.endDate.month() != this.startDate.month() || this.endDate.year() != this.startDate.year())) {
+                    leftCalendar.month = this.startDate.clone().date(2);
+                    var rightCalendar = this.calendarsObj[this.calendarCount -1];
+                    rightCalendar.month = this.endDate.clone().date(2);
+                } else {
+                    // End date on the right most calendar
+                    leftCalendar.month = this.endDate.clone().date(2);
+                    for(var j = 0; j < this.calendarCount; j++) {
+                        this.calendarsObj[this.calendarCount - 1 - j].month = this.endDate.clone().date(2).subtract(j, 'month');
+                    }
+                }
+
+                // Start Date on the left most calendar
+                /*leftCalendar.month = this.startDate.clone().date(2);
 
                 if (!this.linkedCalendars && (this.endDate.month() != this.startDate.month() || this.endDate.year() != this.startDate.year())) {
                     var rightCalendar = this.calendarsObj[this.calendarCount -1];
@@ -636,7 +650,7 @@
                     for(var j = 1; j < this.calendarCount; j++) {
                         this.calendarsObj[j].month = this.startDate.clone().date(2).add(j, 'month');
                     }
-                }
+                }*/
                 
             } else {
 
@@ -1468,7 +1482,7 @@
         monthOrYearChanged: function(e) {
             var isLeft = $(e.target).closest('.calendar').hasClass('left'),
                 leftOrRight = isLeft ? 'left' : 'right',
-                cal = this.container.find('.calendar.'+leftOrRight);
+                cal = this.container.find('.calendar.'+ leftOrRight);
 
             // Month must be Number for new moment versions
             var month = parseInt(cal.find('.monthselect').val(), 10);
