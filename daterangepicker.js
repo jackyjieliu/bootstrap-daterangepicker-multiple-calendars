@@ -34,6 +34,21 @@
 
 }(this || {}, function(root, daterangepicker, moment, $) { // 'this' doesn't exist on a server
 
+    function debounce(func, wait, immediate) {
+        var timeout;
+        return function() {
+            var context = this, args = arguments;
+            var later = function() {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
+        };
+    };
+
     function generateTemplate(calendarCount) {
         var template;
         var i = 0;
@@ -294,6 +309,24 @@
         if (typeof options.linkedCalendars === 'boolean')
             this.linkedCalendars = options.linkedCalendars;
 
+        if (typeof options.selectionType === 'drag' && !this.singleDatePicker) {
+            this.selectionType = 'drag';
+            var that = this;
+            this.debouncePrevCalendar = debounce(function () {
+                that.clickPrev({
+                    target: $('.prev')
+                });
+            }, 500, true);
+
+            this.debounceNextCalendar = debounce(function () {
+                that.clickNext({
+                    target: $('.next')
+                });
+            }, 500, true);
+        } else {
+            this.selectionType = 'click';
+        }
+
         if (typeof options.isInvalidDate === 'function')
             this.isInvalidDate = options.isInvalidDate;
 
@@ -362,7 +395,7 @@
                 // after the maximum, don't display this range option at all.
                 if ((this.minDate && end.isBefore(this.minDate)) || (maxDate && start.isAfter(maxDate)))
                     continue;
-                
+
                 //Support unicode chars in the range names.
                 var elem = document.createElement('textarea');
                 elem.innerHTML = range;
@@ -442,7 +475,6 @@
         this.container.find('.calendar')
             .on('click.daterangepicker', '.prev', $.proxy(this.clickPrev, this))
             .on('click.daterangepicker', '.next', $.proxy(this.clickNext, this))
-            .on('click.daterangepicker', 'td.available', $.proxy(this.clickDate, this))
             .on('mouseenter.daterangepicker', 'td.available', $.proxy(this.hoverDate, this))
             .on('mouseleave.daterangepicker', 'td.available', $.proxy(this.updateFormInputs, this))
             .on('change.daterangepicker', 'select.yearselect', $.proxy(this.monthOrYearChanged, this))
@@ -451,6 +483,29 @@
             .on('click.daterangepicker', '.daterangepicker_input input', $.proxy(this.showCalendars, this))
             //.on('keyup.daterangepicker', '.daterangepicker_input input', $.proxy(this.formInputsChanged, this))
             .on('change.daterangepicker', '.daterangepicker_input input', $.proxy(this.formInputsChanged, this));
+
+        if (this.selectionType === 'click') {
+            this.container.find('.calendar')
+                .on('click.daterangepicker', 'td.available', $.proxy(this.clickDate, this));
+
+        } else if (this.selectionType === 'drag') {
+            this.container.find('.calendar')
+                .on('mousedown.daterangepicker', 'td.available', $.proxy(this.clickDate, this))
+                .on('mouseup.daterangepicker', 'td.available', $.proxy(this.clickDate, this))
+                .on('mouseenter.daterangepicker', 'th.available', $.proxy(
+                    function(e) {
+                        if ($(e.target).hasClass('next') ||
+                            $(e.target).hasClass('next-icon')) {
+                            console.log('next');
+                            this.debounceNextCalendar(e);
+                        } else if ($(e.target).hasClass('prev') ||
+                            $(e.target).hasClass('prev-icon')) {
+
+                            console.log('prev');
+                            this.debouncePrevCalendar(e);
+                        }
+                }, this));
+        }
 
         this.container.find('.ranges')
             .on('click.daterangepicker', 'button.applyBtn', $.proxy(this.clickApply, this))
@@ -512,7 +567,7 @@
 
         getCalendarObjectFromClasses: function(classes) {
 
-            var calendarIndex = this.getCalendarIndexFromClasses(classes)
+            var calendarIndex = this.getCalendarIndexFromClasses(classes);
             return this.getCalendarObject(calendarIndex);
         },
 
@@ -814,7 +869,7 @@
                 html += '<th></th>';
 
             if ((!minDate || minDate.isBefore(calendar.firstDay)) && (!this.linkedCalendars || calendarIndex == 0)) {
-                html += '<th class="prev available"><i class="fa fa-chevron-left glyphicon glyphicon-chevron-left"></i></th>';
+                html += '<th class="prev available"><i class="prev-icon fa fa-chevron-left glyphicon glyphicon-chevron-left"></i></th>';
             } else {
                 html += '<th></th>';
             }
@@ -856,7 +911,7 @@
 
             html += '<th colspan="5" class="month">' + dateHtml + '</th>';
             if ((!maxDate || maxDate.isAfter(calendar.lastDay)) && (!this.linkedCalendars || calendarIndex == this.calendarCount - 1 || this.singleDatePicker)) {
-                html += '<th class="next available"><i class="fa fa-chevron-right glyphicon glyphicon-chevron-right"></i></th>';
+                html += '<th class="next available"><i class="next-icon fa fa-chevron-right glyphicon glyphicon-chevron-right"></i></th>';
             } else {
                 html += '<th></th>';
             }
@@ -1188,6 +1243,11 @@
               // and also close when focus changes to outside the picker (eg. tabbing between controls)
               .on('focusin.daterangepicker', this._outsideClickProxy);
 
+            if (this.selectionType === 'drag') {
+                $(document)
+                  .on('mouseup.daterangepicker', $.proxy(function(e) { this.outsideMouseup(e); }, this));
+            }
+
             // Reposition the picker if the window is resized while it's open
             $(window).on('resize.daterangepicker', $.proxy(function(e) { this.move(e); }, this));
 
@@ -1244,6 +1304,15 @@
                 target.closest('.calendar-table').length
                 ) return;
             this.hide();
+        },
+
+        outsideMouseup: function() {
+            if (this.selectionType === 'drag' &&
+                this.startDate && !this.endDate) {
+
+                this.endDate = moment(this.startDate).endOf('day');
+                this.updateView();
+            }
         },
 
         showCalendars: function() {
@@ -1465,6 +1534,8 @@
 
             this.updateView();
 
+            if (this.selectionType === 'drag')
+                return false;
         },
 
         clickApply: function(e) {
