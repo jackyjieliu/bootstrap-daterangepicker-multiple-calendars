@@ -757,8 +757,9 @@
                             hour = 0;
                     }
                 }
-                this.leftCalendar.month.hour(hour).minute(minute).second(second);
-                this.rightCalendar.month.hour(hour).minute(minute).second(second);
+                for(var i = 0; i < this.calendarCount; i++) {
+                    this.calendarsObj[i].month.hour(hour).minute(minute).second(second);
+                }
             }
 
             for(var i = 0; i < this.calendarCount; i++) {
@@ -1585,6 +1586,7 @@
             }
 
             if (isLeft) {
+                // TODO: this needs to be updated if we want to change month, year
                 this.leftCalendar.month.month(month).year(year);
                 if (this.linkedCalendars)
                     this.rightCalendar.month = this.leftCalendar.month.clone().add(1, 'month');
