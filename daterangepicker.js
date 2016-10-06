@@ -286,7 +286,8 @@
             this.singleDatePicker = options.singleDatePicker;
             if (this.singleDatePicker) {
                 this.endDate = this.startDate.clone();
-                this.calendarCount = 1;
+                this.calendarCount = 1;              
+                this.calendarsObj.length = 1;
             }
         }
 
