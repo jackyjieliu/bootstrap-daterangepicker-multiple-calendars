@@ -284,8 +284,10 @@
 
         if (typeof options.singleDatePicker === 'boolean') {
             this.singleDatePicker = options.singleDatePicker;
-            if (this.singleDatePicker)
+            if (this.singleDatePicker) {
                 this.endDate = this.startDate.clone();
+                this.calendarCount = 1;
+            }
         }
 
         if (typeof options.timePicker === 'boolean')
