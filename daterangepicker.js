@@ -1544,7 +1544,7 @@
             if (this.isShowing) {
                 this.updateView();
             } else {
-                e.preventDefault();
+                e.stopPropagation();
             };
             
 
