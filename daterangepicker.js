@@ -649,9 +649,6 @@
         },
 
         updateView: function() {
-            // Only update view if the calendar is currently shown
-            if (!this.isShowing) return;
-
             if (this.timePicker) {
                 this.renderTimePicker('left');
                 this.renderTimePicker('right');
@@ -1543,7 +1540,11 @@
                     this.clickApply();
             }
 
-            this.updateView();
+            // Only update view if the calendar is currently shown
+            if (this.isShowing) {
+                this.updateView();
+            };
+            
 
             if (this.selectionType === 'drag')
                 return false;
