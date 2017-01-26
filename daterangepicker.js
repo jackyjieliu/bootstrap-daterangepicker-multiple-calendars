@@ -649,6 +649,9 @@
         },
 
         updateView: function() {
+        	// Only update view if the calendar is currently shown
+        	if (!this.isShowing) return;
+
             if (this.timePicker) {
                 this.renderTimePicker('left');
                 this.renderTimePicker('right');
