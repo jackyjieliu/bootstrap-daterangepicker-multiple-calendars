@@ -528,7 +528,7 @@
             if (this.parentEl === 'body') {
                 this.element.on('click.daterangepicker', $.proxy(this.toggle, this));
             } else {
-                this.element.on('click.daterangepicker', $.proxy(this.show, this));
+                //this.element.on('click.daterangepicker', $.proxy(this.show, this));
             }
         }
 
