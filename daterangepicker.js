@@ -1540,7 +1540,13 @@
                     this.clickApply();
             }
 
-            this.updateView();
+            // Only update view if the calendar is currently shown
+            if (this.isShowing) {
+                this.updateView();
+            } else {
+                e.stopPropagation();
+            };
+            
 
             if (this.selectionType === 'drag')
                 return false;
