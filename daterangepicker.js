@@ -519,7 +519,7 @@
 
         if (this.element.is('input')) {
             this.element.on({
-                //'click.daterangepicker': $.proxy(this.show, this),
+                'click.daterangepicker': $.proxy(this.show, this),
                 'focus.daterangepicker': $.proxy(this.show, this),
                 'keyup.daterangepicker': $.proxy(this.elementChanged, this),
                 'keydown.daterangepicker': $.proxy(this.keydown, this)
@@ -1543,6 +1543,8 @@
             // Only update view if the calendar is currently shown
             if (this.isShowing) {
                 this.updateView();
+            } else {
+                e.preventDefault();
             };
             
 
