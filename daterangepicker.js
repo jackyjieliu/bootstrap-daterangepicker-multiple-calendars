@@ -1489,8 +1489,6 @@
 
             var date = calendar.calendar[row][col];
 
-
-            //
             // this function needs to do a few things:
             // * alternate between selecting a start and end date for the range,
             // * if the time picker is enabled, apply the hour/minute/second from the select boxes to the clicked date
