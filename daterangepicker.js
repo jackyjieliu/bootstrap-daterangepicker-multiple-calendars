@@ -113,6 +113,7 @@
         this.dateLimit = false;
         this.autoApply = false;
         this.singleDatePicker = false;
+        this.userMaintainRange = false;
         this.showDropdowns = false;
         this.showWeekNumbers = false;
         this.timePicker = false;
@@ -281,6 +282,10 @@
 
         if (typeof options.showDropdowns === 'boolean')
             this.showDropdowns = options.showDropdowns;
+
+        if (typeof options.userMaintainRange === 'boolean') {
+            this.userMaintainRange = options.userMaintainRange;
+        }
 
         if (typeof options.singleDatePicker === 'boolean') {
             this.singleDatePicker = options.singleDatePicker;
@@ -1484,15 +1489,16 @@
 
             var date = calendar.calendar[row][col];
 
-            //
             // this function needs to do a few things:
             // * alternate between selecting a start and end date for the range,
             // * if the time picker is enabled, apply the hour/minute/second from the select boxes to the clicked date
             // * if autoapply is enabled, and an end date was chosen, apply the selection
             // * if single date picker mode, and time picker isn't enabled, apply the selection immediately
             //
-
-            if (this.endDate) {
+            if (this.userMaintainRange) {
+                // If the user needs to maintain date range, we will pass the date being clicked to the user
+                this.callback(date, this);
+            } else if (this.endDate) {
                 if (this.timePicker) {
                     var hour = parseInt(this.container.find('.left .hourselect').val(), 10);
                     if (!this.timePicker24Hour) {
