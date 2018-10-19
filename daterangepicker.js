@@ -1496,10 +1496,7 @@
             // * if single date picker mode, and time picker isn't enabled, apply the selection immediately
             //
             if (this.userMaintainRange) {
-                // Do not main the date range state here, we want to pass it else where
-                // to maintain and work with it.
-                // which means whoever use it will have to know how to set range, order range
-                // hide the calendar when click on apply
+                // If the user needs to maintain date range, we will pass the date being clicked to the user
                 this.callback(date, this);
             } else if (this.endDate) {
                 if (this.timePicker) {
