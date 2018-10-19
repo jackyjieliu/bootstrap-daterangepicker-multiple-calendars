@@ -113,6 +113,7 @@
         this.dateLimit = false;
         this.autoApply = false;
         this.singleDatePicker = false;
+        this.userMaintainRange = false;
         this.showDropdowns = false;
         this.showWeekNumbers = false;
         this.timePicker = false;
@@ -281,6 +282,10 @@
 
         if (typeof options.showDropdowns === 'boolean')
             this.showDropdowns = options.showDropdowns;
+
+        if (typeof options.userMaintainRange === 'boolean') {
+            this.userMaintainRange = options.userMaintainRange;
+        }
 
         if (typeof options.singleDatePicker === 'boolean') {
             this.singleDatePicker = options.singleDatePicker;
@@ -1484,6 +1489,7 @@
 
             var date = calendar.calendar[row][col];
 
+
             //
             // this function needs to do a few things:
             // * alternate between selecting a start and end date for the range,
@@ -1491,8 +1497,13 @@
             // * if autoapply is enabled, and an end date was chosen, apply the selection
             // * if single date picker mode, and time picker isn't enabled, apply the selection immediately
             //
-
-            if (this.endDate) {
+            if (this.userMaintainRange) {
+                // Do not main the date range state here, we want to pass it else where
+                // to maintain and work with it.
+                // which means whoever use it will have to know how to set range, order range
+                // hide the calendar when click on apply
+                this.callback(date, this);
+            } else if (this.endDate) {
                 if (this.timePicker) {
                     var hour = parseInt(this.container.find('.left .hourselect').val(), 10);
                     if (!this.timePicker24Hour) {
